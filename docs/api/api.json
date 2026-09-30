@@ -1,0 +1,3997 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Quiz API",
+    "version": "1.0.0",
+    "description": "Quiz API for accounts, rooms, room roles, assignments, questions, and answers. Each endpoint explains its behavior and current access rules. Global ROLE_ADMIN is separate from room roles such as OWNER, ADMIN, and STUDENT. Sign in or sign up, then paste the returned JWT into Authorize. Start an assignment attempt before submitting answers; configured exam durations apply from the attempt startDate. Paged endpoints accept page (zero-based), size, and sort."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server URL"
+    }
+  ],
+  "paths": {
+    "/api/users/{id}": {
+      "put": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update a user account",
+        "description": "Updates the account identified by id using AdminUserDTO and returns a success message.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      },
+      "delete": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete a user account",
+        "description": "Deletes the account identified by id. Returns 204 on success; a caught EmptyResultDataAccessException returns 404.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "getCurrentUser",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get my profile",
+        "description": "Returns the account associated with the authenticated principal.\n\n**Who can access:** Any authenticated user."
+      },
+      "put": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "updateCurrentUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update my profile",
+        "description": "Updates the authenticated account using UserDTO and returns a success message.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/true-false-questions/{assignmentId}/{questionId}/answer": {
+      "put": {
+        "tags": [
+          "true-false-answer-controller"
+        ],
+        "operationId": "updateCurrentUserAnswer",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the question being answered."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Replace my true/false answer",
+        "description": "Deletes the current user answer for questionId and saves the replacement. Send a JSON boolean, for example true. Returns questionId and answer. Uses the same attempt and exam timer as submission.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      },
+      "post": {
+        "tags": [
+          "true-false-answer-controller"
+        ],
+        "operationId": "createCurrentUserAnswer",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the question being answered."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Submit my true/false answer",
+        "description": "Saves an answer for the current user. Send a JSON boolean, for example true. Returns questionId and answer. The exam timer is calculated from the attempt startDate.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      }
+    },
+    "/api/rooms/{roomId}/roles/{roleName}": {
+      "get": {
+        "tags": [
+          "room-role-controller"
+        ],
+        "operationId": "checkRoleExists",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the role within the specified room."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Check whether a room role exists",
+        "description": "Returns a boolean using a case-insensitive role name lookup.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      },
+      "put": {
+        "tags": [
+          "room-role-controller"
+        ],
+        "operationId": "updateRoomRole",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the role within the specified room."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomRole"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomRole"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update room role permissions",
+        "description": "Updates canAddUser, canAddRole, canAddAssignment, canPost, canAnswerQuestion, canMarkQuestion, canSeeUserDetails, and canUpdateRoom for roleName.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      },
+      "delete": {
+        "tags": [
+          "room-role-controller"
+        ],
+        "operationId": "deleteRoomRole",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the role within the specified room."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete a room role",
+        "description": "Deletes roleName and returns 204. The built-in STUDENT, OWNER, and ADMIN roles cannot be deleted.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}": {
+      "get": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "getAssignment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assignment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get an assignment",
+        "description": "Checks that the authenticated user belongs to roomId, then looks up the assignment by id. Returns 404 if the assignment does not exist or does not belong to the specified room.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      },
+      "put": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "updateAssignment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Assignment"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assignment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update an assignment",
+        "description": "Updates title, enabled question types, exam duration, answer visibility, and start date; returns the saved assignment.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "deleteAssignment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete an assignment",
+        "description": "Deletes the assignment identified by id and returns 200 with an empty body.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/truefalse-questions/{id}": {
+      "put": {
+        "tags": [
+          "true-false-question-controller"
+        ],
+        "operationId": "updateTrueFalseQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrueFalseQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrueFalseQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update a true/false question",
+        "description": "Updates the question content, answer data, image, and points. The question must belong to assignmentId.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "tags": [
+          "true-false-question-controller"
+        ],
+        "operationId": "deleteTrueFalseQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete a true/false question",
+        "description": "Deletes a question belonging to assignmentId and returns 204.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/mcq-questions/{id}": {
+      "put": {
+        "tags": [
+          "mcq-question-controller"
+        ],
+        "operationId": "updateMcqQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McqQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/McqQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update a multiple-choice question",
+        "description": "Updates the question content, answer data, image, and points. The question must belong to assignmentId. Existing choices are replaced. Supply choices with isCorrect flags: a single-answer question requires exactly one correct choice; a multiple-answer question requires more than one.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "tags": [
+          "mcq-question-controller"
+        ],
+        "operationId": "deleteMcqQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete a multiple-choice question",
+        "description": "Deletes a question belonging to assignmentId and returns 204.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/essay-questions/{id}": {
+      "put": {
+        "tags": [
+          "essay-question-controller"
+        ],
+        "operationId": "updateEssayQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EssayQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EssayQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update a essay question",
+        "description": "Updates the question content, answer data, image, and points. The question must belong to assignmentId.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "tags": [
+          "essay-question-controller"
+        ],
+        "operationId": "deleteEssayQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete a essay question",
+        "description": "Deletes a question belonging to assignmentId and returns 204.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/mcq-questions/{assignmentId}/{questionId}/answer": {
+      "put": {
+        "tags": [
+          "mcq-answer-controller"
+        ],
+        "operationId": "updateCurrentUserAnswer_1",
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the question being answered."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Replace my MCQ answer",
+        "description": "Deletes the current user answer for questionId and saves the replacement. Send a JSON array of choice numbers, for example [1, 3]. The response contains questionId and the last selected choiceNumber; an empty selection returns an empty object. Uses the same attempt and exam timer as submission.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      },
+      "post": {
+        "tags": [
+          "mcq-answer-controller"
+        ],
+        "operationId": "createCurrentUserAnswer_1",
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the question being answered."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Submit my MCQ answer",
+        "description": "Saves an answer for the current user. Send a JSON array of choice numbers, for example [1, 3]. The response contains questionId and the last selected choiceNumber; an empty selection returns an empty object. The exam timer is calculated from the attempt startDate.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      }
+    },
+    "/api/essay-questions/{assignmentId}/{questionId}/answer": {
+      "put": {
+        "tags": [
+          "essay-answer-controller"
+        ],
+        "operationId": "updateCurrentUserAnswer_2",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the question being answered."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Replace my essay answer",
+        "description": "Deletes the current user answer for questionId and saves the replacement. Send the answer as a string body. Returns questionId and answer. Uses the same attempt and exam timer as submission.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      },
+      "post": {
+        "tags": [
+          "essay-answer-controller"
+        ],
+        "operationId": "createCurrentUserAnswer_2",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the question being answered."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Submit my essay answer",
+        "description": "Saves an answer for the current user. Send the answer as a string body. Returns questionId and answer. The exam timer is calculated from the attempt startDate.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      }
+    },
+    "/api/admin/rooms/{id}": {
+      "put": {
+        "tags": [
+          "admin-room-controller"
+        ],
+        "operationId": "updateRoom",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update a room as administrator",
+        "description": "Updates the room name and join, question, and comment settings from RoomDTO. Returns a success message.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      },
+      "delete": {
+        "tags": [
+          "admin-room-controller"
+        ],
+        "operationId": "deleteRoom",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete a room through the admin route",
+        "description": "Deletes a room and returns 204 on success. The service also requires OWNER membership, even for a global administrator.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN who also hold the OWNER role in this room."
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "getAllUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Zero-based page index; the first page is 0."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            },
+            "description": "Maximum number of results per page."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageUser"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List all users",
+        "description": "Returns a page of user accounts. Accepts page, size, and sort.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      },
+      "post": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "createUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a user account",
+        "description": "Creates a user from AdminUserDTO. Returns a success message; duplicate username, email, or phone number returns 400.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms": {
+      "get": {
+        "tags": [
+          "user-room-controller"
+        ],
+        "operationId": "getUserRooms",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Zero-based page index; the first page is 0."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            },
+            "description": "Maximum number of results per page."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRoom"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List my rooms",
+        "description": "Returns a page of rooms the authenticated user belongs to, regardless of their room role. Accepts page, size, and sort. Users without room memberships receive an empty page.\n\n**Who can access:** Any authenticated user; only their own room memberships are included, including for users with the global ROLE_ADMIN role."
+      },
+      "post": {
+        "tags": [
+          "user-room-controller"
+        ],
+        "operationId": "createRoom",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a room",
+        "description": "Creates a room from RoomDTO and associates the caller with the OWNER room role. Returns a success message.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/rooms/{roomId}/roles": {
+      "get": {
+        "tags": [
+          "room-role-controller"
+        ],
+        "operationId": "getRoomRoles",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Zero-based page index; the first page is 0."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            },
+            "description": "Maximum number of results per page."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRoomRole"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List room roles",
+        "description": "Returns a page of roles and their permission flags for the room. Accepts page, size, and sort (for example id.roleName,asc).\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      },
+      "post": {
+        "tags": [
+          "room-role-controller"
+        ],
+        "operationId": "createRoomRole",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomRole"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomRole"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a room role",
+        "description": "Creates a role in the specified room. Supply the role name in the composite id and its permission flags.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments": {
+      "get": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "getAssignmentsByRoom",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAssignmentsListElement"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List room assignments",
+        "description": "Returns a page of assignment summaries containing id, title, and description.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      },
+      "post": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "createAssignment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Assignment"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assignment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create an assignment",
+        "description": "Creates an assignment associated with roomId and returns the saved assignment.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/truefalse-questions": {
+      "post": {
+        "tags": [
+          "true-false-question-controller"
+        ],
+        "operationId": "createTrueFalseQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrueFalseQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrueFalseQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a true/false question",
+        "description": "Adds a question to the assignment and returns 201 with the saved question. The assignment must enable this question type.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/mcq-questions": {
+      "post": {
+        "tags": [
+          "mcq-question-controller"
+        ],
+        "operationId": "createMcqQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McqQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/McqQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a multiple-choice question",
+        "description": "Adds a question to the assignment and returns 201 with the saved question. The assignment must enable this question type. Supply choices with isCorrect flags: a single-answer question requires exactly one correct choice; a multiple-answer question requires more than one.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/essay-questions": {
+      "post": {
+        "tags": [
+          "essay-question-controller"
+        ],
+        "operationId": "createEssayQuestion",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EssayQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EssayQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a essay question",
+        "description": "Adds a question to the assignment and returns 201 with the saved question. The assignment must enable this question type.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{id}/add-student/{userName}": {
+      "post": {
+        "tags": [
+          "user-room-controller"
+        ],
+        "operationId": "addUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          },
+          {
+            "name": "userName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Username of the existing account to add as a student."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Add a student to a room",
+        "description": "Finds an existing user by userName and assigns the STUDENT room role. Returns a success message. The service only adds the user when its permission check passes.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddUser=true."
+      }
+    },
+    "/api/auth/public/signup": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "signUp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Register and sign in",
+        "description": "Creates an account with a hashed password, signs it in, and returns user details and a JWT. Duplicate username or email returns 400.\n\n**Who can access:** Public; no authentication required."
+      }
+    },
+    "/api/auth/public/signin": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "signIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Sign in with email or username",
+        "description": "Authenticates emailOrUsername and password and returns user details and a JWT. Use the returned token in Swagger Authorize. Invalid credentials return 400; a UsernameNotFoundException returns 404.\n\n**Who can access:** Public; no authentication required."
+      }
+    },
+    "/api/answers/{assignmentId}": {
+      "post": {
+        "tags": [
+          "assignment-answer-controller"
+        ],
+        "operationId": "createAssignmentAnswer",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Start an assignment attempt",
+        "description": "Creates an AssignmentAnswer record for the current user. Start an attempt before submitting individual question answers. Returns 200 with an empty body.\n\n**Who can access:** Authenticated members of the assignment room; global ROLE_ADMIN alone does not bypass the membership lookup."
+      }
+    },
+    "/api/true-false-questions/{assignmentId}/answer/{userId}": {
+      "get": {
+        "tags": [
+          "true-false-answer-controller"
+        ],
+        "operationId": "adminGetUserAnswersForAssignment",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the user whose answers are requested."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGetUserTrueFalseAnswersResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List another user true/false answers",
+        "description": "Returns a page of answers for the specified userId and assignmentId.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN, or a room role for the assignment with canSeeUserDetails=true."
+      }
+    },
+    "/api/true-false-questions/{assignmentId}/answer/me": {
+      "get": {
+        "tags": [
+          "true-false-answer-controller"
+        ],
+        "operationId": "getUserAnswersForAssignment",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGetUserTrueFalseAnswersResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List my true/false answers",
+        "description": "Returns a page of the current user answers for assignmentId.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}/trueFalse-questions": {
+      "get": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "getTrueFalseQuestions",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Zero-based page index; the first page is 0."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            },
+            "description": "Maximum number of results per page."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageTrueFalseQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List assignment true/false questions",
+        "description": "Returns a page of the assignment true/false questions. Accepts page, size, and sort. The current implementation checks room access but does not enforce the assignment start date.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}/mcq-questions": {
+      "get": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "getMcqQuestions",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Zero-based page index; the first page is 0."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            },
+            "description": "Maximum number of results per page."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageMcqQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List assignment MCQ questions",
+        "description": "Returns a page of the assignment multiple-choice questions. Accepts page, size, and sort. The current implementation checks room access but does not enforce the assignment start date.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}/essay-questions": {
+      "get": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "getEssayQuestions",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Zero-based page index; the first page is 0."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            },
+            "description": "Maximum number of results per page."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEssayQuestion"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List assignment essay questions",
+        "description": "Returns a page of the assignment essay questions. Accepts page, size, and sort. The current implementation checks room access but does not enforce the assignment start date.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/search": {
+      "get": {
+        "tags": [
+          "assignment-controller"
+        ],
+        "operationId": "searchAssignments",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the room used for room access and permission checks."
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional case-insensitive substring of the assignment title."
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Inclusive lower bound on assignment creation time (ISO local date-time)."
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Inclusive upper bound on assignment creation time (ISO local date-time)."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAssignment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Search room assignments",
+        "description": "Returns a page of assignments filtered by optional case-insensitive title substring and inclusive createdAt date bounds. Dates use ISO local date-time, for example 2026-09-26T10:00:00.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms/{id}": {
+      "get": {
+        "tags": [
+          "user-room-controller"
+        ],
+        "operationId": "getRoomById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get a room",
+        "description": "Returns room details by id, or 404 if the room does not exist. No room membership check is currently enforced.\n\n**Who can access:** Any authenticated user."
+      },
+      "delete": {
+        "tags": [
+          "user-room-controller"
+        ],
+        "operationId": "deleteRoom_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the resource identified by this endpoint."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete an owned room",
+        "description": "Deletes the room and returns a success message. The service requires the caller to hold the OWNER room role.\n\n**Who can access:** Authenticated members with the OWNER role in this room; global ROLE_ADMIN alone does not bypass this check."
+      }
+    },
+    "/api/public/users/username/exists": {
+      "get": {
+        "tags": [
+          "public-user-controller"
+        ],
+        "operationId": "usernameExists",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Username to check for an existing account."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/public/users/email/exists": {
+      "get": {
+        "tags": [
+          "public-user-controller"
+        ],
+        "operationId": "emailExists",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Email address to check for an existing account."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/mcq-questions/{assignmentId}/answer/{userId}": {
+      "get": {
+        "tags": [
+          "mcq-answer-controller"
+        ],
+        "operationId": "adminGetUserAnswersForAssignment_1",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the user whose answers are requested."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGetUserMcqAnswersResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List another user MCQ answers",
+        "description": "Returns a page of answers for the specified userId and assignmentId.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN, or a room role for the assignment with canSeeUserDetails=true."
+      }
+    },
+    "/api/mcq-questions/{assignmentId}/answer/me": {
+      "get": {
+        "tags": [
+          "mcq-answer-controller"
+        ],
+        "operationId": "getUserAnswersForAssignment_1",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGetUserMcqAnswersResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List my MCQ answers",
+        "description": "Returns a page of the current user answers for assignmentId.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/essay-questions/{assignmentId}/answer/{userId}": {
+      "get": {
+        "tags": [
+          "essay-answer-controller"
+        ],
+        "operationId": "adminGetUserAnswersForAssignment_2",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the user whose answers are requested."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGetUserEssayAnswersResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List another user essay answers",
+        "description": "Returns a page of answers for the specified userId and assignmentId.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN, or a room role for the assignment with canSeeUserDetails=true."
+      }
+    },
+    "/api/essay-questions/{assignmentId}/answer/me": {
+      "get": {
+        "tags": [
+          "essay-answer-controller"
+        ],
+        "operationId": "getUserAnswersForAssignment_2",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the assignment containing the questions or attempt."
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGetUserEssayAnswersResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List my essay answers",
+        "description": "Returns a page of the current user answers for assignmentId.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/admin/rooms": {
+      "get": {
+        "tags": [
+          "admin-room-controller"
+        ],
+        "operationId": "getAllRooms",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Zero-based page index; the first page is 0."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            },
+            "description": "Maximum number of results per page."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRoom"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List all rooms",
+        "description": "Returns a page of rooms in the system. Accepts page, size, and sort.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminUserDTO": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "profileImageUrl": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ROLE_USER",
+              "ROLE_ADMIN"
+            ]
+          }
+        }
+      },
+      "UserDTO": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "profileImageUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "RoomRole": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/RoomRoleId"
+          },
+          "canAddUser": {
+            "type": "boolean"
+          },
+          "canAddRole": {
+            "type": "boolean"
+          },
+          "canAddAssignment": {
+            "type": "boolean"
+          },
+          "canPost": {
+            "type": "boolean"
+          },
+          "canAnswerQuestion": {
+            "type": "boolean"
+          },
+          "canMarkQuestion": {
+            "type": "boolean"
+          },
+          "canSeeUserDetails": {
+            "type": "boolean"
+          },
+          "canUpdateRoom": {
+            "type": "boolean"
+          },
+          "userRoomRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRoomRole"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "roleName": {
+            "type": "string"
+          }
+        }
+      },
+      "RoomRoleId": {
+        "type": "object",
+        "properties": {
+          "roomId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roleName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "username": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "phoneNumber": {
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 1
+          },
+          "profileImageUrl": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ROLE_USER",
+              "ROLE_ADMIN"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserRoomRole": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "roomRole": {
+            "$ref": "#/components/schemas/RoomRole"
+          },
+          "roomId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Assignment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "mcqExist": {
+            "type": "boolean"
+          },
+          "trueFalseExist": {
+            "type": "boolean"
+          },
+          "essayExist": {
+            "type": "boolean"
+          },
+          "examDurationMinutes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answerShowedAfterSubmission": {
+            "type": "boolean"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mcqQuestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/McqQuestion"
+            }
+          },
+          "trueFalseQuestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrueFalseQuestion"
+            }
+          },
+          "essayQuestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EssayQuestion"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EssayQuestion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignment": {
+            "$ref": "#/components/schemas/Assignment"
+          },
+          "questionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionBody": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1
+          },
+          "essayCorrectAnswer": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "McqChoice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mcqQuestion": {
+            "$ref": "#/components/schemas/McqQuestion"
+          },
+          "choiceText": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "choiceNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "McqQuestion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignment": {
+            "$ref": "#/components/schemas/Assignment"
+          },
+          "questionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionBody": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1
+          },
+          "multipleAnswer": {
+            "type": "boolean"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mcqChoices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/McqChoice"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TrueFalseQuestion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignment": {
+            "$ref": "#/components/schemas/Assignment"
+          },
+          "questionBody": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "boolean"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RoomDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "joinByLink": {
+            "type": "boolean"
+          },
+          "isCommentAllowed": {
+            "type": "boolean"
+          },
+          "isQuestionAllowed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SignUpRequest": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "profileImageUrl": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "SignInRequest": {
+        "type": "object",
+        "properties": {
+          "emailOrUsername": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "PageUser": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "unpaged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "type": "boolean"
+          },
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageGetUserTrueFalseAnswersResponse": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/getUserTrueFalseAnswersResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "getUserTrueFalseAnswersResponse": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answer": {
+            "type": "boolean"
+          },
+          "questionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageRoom": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Room"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "joinByLink": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isQuestionAllowed": {
+            "type": "boolean"
+          },
+          "isCommentAllowed": {
+            "type": "boolean"
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "roomRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomRole"
+            }
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Assignment"
+            }
+          }
+        }
+      },
+      "PageRoomRole": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomRole"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AssignmentsListElement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "PageAssignmentsListElement": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentsListElement"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageTrueFalseQuestion": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrueFalseQuestion"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageMcqQuestion": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/McqQuestion"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageEssayQuestion": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EssayQuestion"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageAssignment": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Assignment"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageGetUserMcqAnswersResponse": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/getUserMcqAnswersResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "getUserMcqAnswersResponse": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "choiceNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "questionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageGetUserEssayAnswersResponse": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/getUserEssayAnswersResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "getUserEssayAnswersResponse": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "questionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

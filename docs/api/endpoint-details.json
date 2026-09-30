@@ -1,0 +1,312 @@
+{
+  "info": {
+    "description": "Quiz API for accounts, rooms, room roles, assignments, questions, and answers. Each endpoint explains its behavior and current access rules. Global ROLE_ADMIN is separate from room roles such as OWNER, ADMIN, and STUDENT. Sign in or sign up, then paste the returned JWT into Authorize. Start an assignment attempt before submitting answers; configured exam durations apply from the attempt startDate. Paged endpoints accept page (zero-based), size, and sort."
+  },
+  "paths": {
+    "/api/answers/{assignmentId}": {
+      "post": {
+        "summary": "Start an assignment attempt",
+        "description": "Creates an AssignmentAnswer record for the current user. Start an attempt before submitting individual question answers. Returns 200 with an empty body.\n\n**Who can access:** Authenticated members of the assignment room; global ROLE_ADMIN alone does not bypass the membership lookup."
+      }
+    },
+    "/api/rooms/{roomId}/assignments": {
+      "get": {
+        "summary": "List room assignments",
+        "description": "Returns a page of assignment summaries containing id, title, and description.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      },
+      "post": {
+        "summary": "Create an assignment",
+        "description": "Creates an assignment associated with roomId and returns the saved assignment.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/search": {
+      "get": {
+        "summary": "Search room assignments",
+        "description": "Returns a page of assignments filtered by optional case-insensitive title substring and inclusive createdAt date bounds. Dates use ISO local date-time, for example 2026-09-26T10:00:00.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}": {
+      "get": {
+        "summary": "Get an assignment",
+        "description": "Checks that the authenticated user belongs to roomId, then looks up the assignment by id. Returns 404 if the assignment does not exist or does not belong to the specified room.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      },
+      "put": {
+        "summary": "Update an assignment",
+        "description": "Updates title, enabled question types, exam duration, answer visibility, and start date; returns the saved assignment.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "summary": "Delete an assignment",
+        "description": "Deletes the assignment identified by id and returns 200 with an empty body.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}/mcq-questions": {
+      "get": {
+        "summary": "List assignment MCQ questions",
+        "description": "Returns a page of the assignment multiple-choice questions. Accepts page, size, and sort. The current implementation checks room access but does not enforce the assignment start date.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}/trueFalse-questions": {
+      "get": {
+        "summary": "List assignment true/false questions",
+        "description": "Returns a page of the assignment true/false questions. Accepts page, size, and sort. The current implementation checks room access but does not enforce the assignment start date.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{id}/essay-questions": {
+      "get": {
+        "summary": "List assignment essay questions",
+        "description": "Returns a page of the assignment essay questions. Accepts page, size, and sort. The current implementation checks room access but does not enforce the assignment start date.\n\n**Who can access:** Authenticated room members or users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/auth/public/signin": {
+      "post": {
+        "summary": "Sign in with email or username",
+        "description": "Authenticates emailOrUsername and password and returns user details and a JWT. Use the returned token in Swagger Authorize. Invalid credentials return 400; a UsernameNotFoundException returns 404.\n\n**Who can access:** Public; no authentication required."
+      }
+    },
+    "/api/auth/public/signup": {
+      "post": {
+        "summary": "Register and sign in",
+        "description": "Creates an account with a hashed password, signs it in, and returns user details and a JWT. Duplicate username or email returns 400.\n\n**Who can access:** Public; no authentication required."
+      }
+    },
+    "/api/essay-questions/{assignmentId}/{questionId}/answer": {
+      "post": {
+        "summary": "Submit my essay answer",
+        "description": "Saves an answer for the current user. Send the answer as a string body. Returns questionId and answer. The exam timer is calculated from the attempt startDate.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      },
+      "put": {
+        "summary": "Replace my essay answer",
+        "description": "Deletes the current user answer for questionId and saves the replacement. Send the answer as a string body. Returns questionId and answer. Uses the same attempt and exam timer as submission.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      }
+    },
+    "/api/essay-questions/{assignmentId}/answer/me": {
+      "get": {
+        "summary": "List my essay answers",
+        "description": "Returns a page of the current user answers for assignmentId.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/essay-questions/{assignmentId}/answer/{userId}": {
+      "get": {
+        "summary": "List another user essay answers",
+        "description": "Returns a page of answers for the specified userId and assignmentId.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN, or a room role for the assignment with canSeeUserDetails=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/essay-questions/{id}": {
+      "put": {
+        "summary": "Update a essay question",
+        "description": "Updates the question content, answer data, image, and points. The question must belong to assignmentId.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "summary": "Delete a essay question",
+        "description": "Deletes a question belonging to assignmentId and returns 204.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/essay-questions": {
+      "post": {
+        "summary": "Create a essay question",
+        "description": "Adds a question to the assignment and returns 201 with the saved question. The assignment must enable this question type.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/mcq-questions/{assignmentId}/{questionId}/answer": {
+      "put": {
+        "summary": "Replace my MCQ answer",
+        "description": "Deletes the current user answer for questionId and saves the replacement. Send a JSON array of choice numbers, for example [1, 3]. The response contains questionId and the last selected choiceNumber; an empty selection returns an empty object. Uses the same attempt and exam timer as submission.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      },
+      "post": {
+        "summary": "Submit my MCQ answer",
+        "description": "Saves an answer for the current user. Send a JSON array of choice numbers, for example [1, 3]. The response contains questionId and the last selected choiceNumber; an empty selection returns an empty object. The exam timer is calculated from the attempt startDate.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      }
+    },
+    "/api/mcq-questions/{assignmentId}/answer/me": {
+      "get": {
+        "summary": "List my MCQ answers",
+        "description": "Returns a page of the current user answers for assignmentId.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/mcq-questions/{assignmentId}/answer/{userId}": {
+      "get": {
+        "summary": "List another user MCQ answers",
+        "description": "Returns a page of answers for the specified userId and assignmentId.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN, or a room role for the assignment with canSeeUserDetails=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/mcq-questions/{id}": {
+      "put": {
+        "summary": "Update a multiple-choice question",
+        "description": "Updates the question content, answer data, image, and points. The question must belong to assignmentId. Existing choices are replaced. Supply choices with isCorrect flags: a single-answer question requires exactly one correct choice; a multiple-answer question requires more than one.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "summary": "Delete a multiple-choice question",
+        "description": "Deletes a question belonging to assignmentId and returns 204.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/mcq-questions": {
+      "post": {
+        "summary": "Create a multiple-choice question",
+        "description": "Adds a question to the assignment and returns 201 with the saved question. The assignment must enable this question type. Supply choices with isCorrect flags: a single-answer question requires exactly one correct choice; a multiple-answer question requires more than one.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/roles": {
+      "get": {
+        "summary": "List room roles",
+        "description": "Returns a page of roles and their permission flags for the room. Accepts page, size, and sort (for example id.roleName,asc).\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      },
+      "post": {
+        "summary": "Create a room role",
+        "description": "Creates a role in the specified room. Supply the role name in the composite id and its permission flags.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      }
+    },
+    "/api/rooms/{roomId}/roles/{roleName}": {
+      "put": {
+        "summary": "Update room role permissions",
+        "description": "Updates canAddUser, canAddRole, canAddAssignment, canPost, canAnswerQuestion, canMarkQuestion, canSeeUserDetails, and canUpdateRoom for roleName.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      },
+      "delete": {
+        "summary": "Delete a room role",
+        "description": "Deletes roleName and returns 204. The built-in STUDENT, OWNER, and ADMIN roles cannot be deleted.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      },
+      "get": {
+        "summary": "Check whether a room role exists",
+        "description": "Returns a boolean using a case-insensitive role name lookup.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddRole=true."
+      }
+    },
+    "/api/true-false-questions/{assignmentId}/{questionId}/answer": {
+      "post": {
+        "summary": "Submit my true/false answer",
+        "description": "Saves an answer for the current user. Send a JSON boolean, for example true. Returns questionId and answer. The exam timer is calculated from the attempt startDate.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      },
+      "put": {
+        "summary": "Replace my true/false answer",
+        "description": "Deletes the current user answer for questionId and saves the replacement. Send a JSON boolean, for example true. Returns questionId and answer. Uses the same attempt and exam timer as submission.\n\n**Who can access:** Authenticated users with their own existing AssignmentAnswer attempt for assignmentId. If examDurationMinutes is set, the attempt must not have expired."
+      }
+    },
+    "/api/true-false-questions/{assignmentId}/answer/me": {
+      "get": {
+        "summary": "List my true/false answers",
+        "description": "Returns a page of the current user answers for assignmentId.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/true-false-questions/{assignmentId}/answer/{userId}": {
+      "get": {
+        "summary": "List another user true/false answers",
+        "description": "Returns a page of answers for the specified userId and assignmentId.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN, or a room role for the assignment with canSeeUserDetails=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/truefalse-questions/{id}": {
+      "put": {
+        "summary": "Update a true/false question",
+        "description": "Updates the question content, answer data, image, and points. The question must belong to assignmentId.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      },
+      "delete": {
+        "summary": "Delete a true/false question",
+        "description": "Deletes a question belonging to assignmentId and returns 204.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/rooms/{roomId}/assignments/{assignmentId}/truefalse-questions": {
+      "post": {
+        "summary": "Create a true/false question",
+        "description": "Adds a question to the assignment and returns 201 with the saved question. The assignment must enable this question type.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddAssignment=true."
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "List all users",
+        "description": "Returns a page of user accounts. Accepts page, size, and sort.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      },
+      "post": {
+        "summary": "Create a user account",
+        "description": "Creates a user from AdminUserDTO. Returns a success message; duplicate username, email, or phone number returns 400.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "summary": "Get my profile",
+        "description": "Returns the account associated with the authenticated principal.\n\n**Who can access:** Any authenticated user."
+      },
+      "put": {
+        "summary": "Update my profile",
+        "description": "Updates the authenticated account using UserDTO and returns a success message.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/users/{id}": {
+      "put": {
+        "summary": "Update a user account",
+        "description": "Updates the account identified by id using AdminUserDTO and returns a success message.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      },
+      "delete": {
+        "summary": "Delete a user account",
+        "description": "Deletes the account identified by id. Returns 204 on success; a caught EmptyResultDataAccessException returns 404.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/users/exists/username": {
+      "get": {
+        "summary": "Check whether a username exists",
+        "description": "Returns true if the supplied username is already registered.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/users/exists/email": {
+      "get": {
+        "summary": "Check whether an email exists",
+        "description": "Returns true if the supplied email is already registered.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/admin/rooms": {
+      "get": {
+        "summary": "List all rooms",
+        "description": "Returns a page of rooms in the system. Accepts page, size, and sort.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      }
+    },
+    "/api/admin/rooms/{id}": {
+      "put": {
+        "summary": "Update a room as administrator",
+        "description": "Updates the room name and join, question, and comment settings from RoomDTO. Returns a success message.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role."
+      },
+      "delete": {
+        "summary": "Delete a room through the admin route",
+        "description": "Deletes a room and returns 204 on success. The service also requires OWNER membership, even for a global administrator.\n\n**Who can access:** Authenticated users with global ROLE_ADMIN who also hold the OWNER role in this room."
+      }
+    },
+    "/api/rooms/{id}": {
+      "get": {
+        "summary": "Get a room",
+        "description": "Returns room details by id, or 404 if the room does not exist. No room membership check is currently enforced.\n\n**Who can access:** Any authenticated user."
+      },
+      "delete": {
+        "summary": "Delete an owned room",
+        "description": "Deletes the room and returns a success message. The service requires the caller to hold the OWNER room role.\n\n**Who can access:** Authenticated members with the OWNER role in this room; global ROLE_ADMIN alone does not bypass this check."
+      }
+    },
+    "/api/rooms": {
+      "get": {
+        "summary": "List my rooms",
+        "description": "Returns a page of rooms the authenticated user belongs to, regardless of their room role. Accepts page, size, and sort. Users without room memberships receive an empty page.\n\n**Who can access:** Any authenticated user; only their own room memberships are included, including for users with the global ROLE_ADMIN role."
+      },
+      "post": {
+        "summary": "Create a room",
+        "description": "Creates a room from RoomDTO and associates the caller with the OWNER room role. Returns a success message.\n\n**Who can access:** Any authenticated user."
+      }
+    },
+    "/api/rooms/{id}/add-student/{userName}": {
+      "post": {
+        "summary": "Add a student to a room",
+        "description": "Finds an existing user by userName and assigns the STUDENT room role. Returns a success message. The service only adds the user when its permission check passes.\n\n**Who can access:** Authenticated users with the global ROLE_ADMIN role, or room members whose room role has canAddUser=true."
+      }
+    }
+  },
+  "parameters": {
+    "roomId": "ID of the room used for room access and permission checks.",
+    "assignmentId": "ID of the assignment containing the questions or attempt.",
+    "questionId": "ID of the question being answered.",
+    "userId": "ID of the user whose answers are requested.",
+    "id": "ID of the resource identified by this endpoint.",
+    "roleName": "Name of the role within the specified room.",
+    "userName": "Username of the existing account to add as a student.",
+    "username": "Username to check for an existing account.",
+    "email": "Email address to check for an existing account.",
+    "title": "Optional case-insensitive substring of the assignment title.",
+    "startDate": "Inclusive lower bound on assignment creation time (ISO local date-time).",
+    "endDate": "Inclusive upper bound on assignment creation time (ISO local date-time).",
+    "page": "Zero-based page index; the first page is 0.",
+    "size": "Maximum number of results per page.",
+    "sort": "Sort by property and optional direction, for example title,asc. Repeat for multiple sort fields."
+  }
+}
